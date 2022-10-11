@@ -1,0 +1,6 @@
+target
+.env
+.gitignore
+Dockerfile
+sample.env
+watch.sh

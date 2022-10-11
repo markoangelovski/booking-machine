@@ -39,5 +39,4 @@ async fn main() -> std::io::Result<()> {
     .bind(("0.0.0.0", port))?
     .run()
     .await
-    // Ok(())
 }
