@@ -58,21 +58,25 @@ impl MongoDB {
             println!("Day: {:?}", day);
             days.push(day)
         }
-        // println!("Days from method: {:?}", days);
         Ok(days)
     }
 
-    pub async fn find_day(&self, day: &str) -> Result<Option<Day>, mongodb::error::Error> {
-        let filter = doc! {"day": day};
+    pub async fn find_day(
+        &self,
+        owner_str: &str,
+        day: &str,
+    ) -> Result<Option<Day>, mongodb::error::Error> {
+        let owner_id = ObjectId::parse_str(owner_str).unwrap();
+        let filter = doc! {"owner": owner_id, "day": day};
         self.days.find_one(filter, None).await
     }
 
     pub async fn find_event(
         &self,
-        event_id: &str,
+        event_id_str: &str,
     ) -> Result<Option<EventDocument>, mongodb::error::Error> {
-        let obj_id = ObjectId::parse_str(event_id).unwrap();
-        let filter = doc! {"_id": obj_id};
+        let event_id = ObjectId::parse_str(event_id_str).unwrap();
+        let filter = doc! {"_id": event_id};
         self.events.find_one(filter, None).await
     }
 

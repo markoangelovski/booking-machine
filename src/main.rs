@@ -3,10 +3,12 @@ use dotenv::dotenv;
 
 mod api;
 mod handlers;
+mod middlewares;
 mod models;
 
 use api::routes::{book_event, test};
 use handlers::mongo::MongoDB;
+use middlewares::auth::CheckLoginFactory;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -18,8 +20,6 @@ async fn main() -> std::io::Result<()> {
     let env = std::env::var("ENV").unwrap_or("development".to_string());
     if env == "development" {
         dotenv().ok();
-        std::env::set_var("RUST_LOG", "debug");
-        std::env::set_var("RUST_BACKTRACE", "1");
         env_logger::init();
     }
 
@@ -28,10 +28,9 @@ async fn main() -> std::io::Result<()> {
 
     println!("Starting the Booking Machine server in ENV '{env}' on PORT {port}!");
     HttpServer::new(move || {
-        let logger = Logger::default();
-
         App::new()
-            .wrap(logger)
+            .wrap(Logger::default())
+            .wrap(CheckLoginFactory)
             .app_data(mongo_data.clone())
             .service(book_event)
             .service(test)

@@ -1,14 +1,15 @@
 use actix_web::{
     get, post,
-    web::{Data, Query},
+    web::{Data, Query, ReqData},
     HttpResponse,
 };
 use futures::join;
 use mongodb::bson::oid::ObjectId;
 
-use super::routes_structs::{BookingPayload, Response};
+use super::routes_structs::{BookingPayload, StdRes};
 
 use crate::handlers::mongo::MongoDB;
+use crate::middlewares::auth::UserId;
 use crate::models::mongo::BookingDetail;
 
 #[get("/days")]
@@ -20,22 +21,33 @@ pub async fn test(db: Data<MongoDB>) -> HttpResponse {
 }
 
 #[post("/book")]
-pub async fn book_event(db: Data<MongoDB>, query: Query<BookingPayload>) -> HttpResponse {
+pub async fn book_event(
+    db: Data<MongoDB>,
+    query: Query<BookingPayload>,
+    user_id: ReqData<UserId>,
+) -> HttpResponse {
+    println!("User ID{:?}", user_id);
+
+    let UserId(user_id) = user_id.into_inner();
+
     let amount: f32 = query.amount.parse().unwrap_or_default();
 
-    let (day, event) = join!(db.find_day(&query.day), db.find_event(&query.eventId));
+    let (day, event) = join!(
+        db.find_day(&user_id, &query.day),
+        db.find_event(&query.eventId)
+    );
 
     let day = match day {
         Ok(day) => match day {
             Some(day_doc) => day_doc,
             None => {
-                return HttpResponse::NotFound().json(Response {
+                return HttpResponse::NotFound().json(StdRes {
                     message: "Day not found".to_string(),
                 })
             }
         },
         Err(err) => {
-            return HttpResponse::InternalServerError().json(Response {
+            return HttpResponse::InternalServerError().json(StdRes {
                 message: err.to_string(),
             })
         }
@@ -45,13 +57,13 @@ pub async fn book_event(db: Data<MongoDB>, query: Query<BookingPayload>) -> Http
         Ok(event) => match event {
             Some(event_doc) => event_doc,
             None => {
-                return HttpResponse::NotFound().json(Response {
+                return HttpResponse::NotFound().json(StdRes {
                     message: "Event not found".to_string(),
                 })
             }
         },
         Err(err) => {
-            return HttpResponse::InternalServerError().json(Response {
+            return HttpResponse::InternalServerError().json(StdRes {
                 message: err.to_string(),
             })
         }
@@ -87,7 +99,7 @@ pub async fn book_event(db: Data<MongoDB>, query: Query<BookingPayload>) -> Http
     match updated_day_result {
         Ok(result) => result,
         Err(err) => {
-            return HttpResponse::InternalServerError().json(Response {
+            return HttpResponse::InternalServerError().json(StdRes {
                 message: err.to_string(),
             })
         }
@@ -96,13 +108,13 @@ pub async fn book_event(db: Data<MongoDB>, query: Query<BookingPayload>) -> Http
     match updated_event_result {
         Ok(result) => result,
         Err(err) => {
-            return HttpResponse::InternalServerError().json(Response {
+            return HttpResponse::InternalServerError().json(StdRes {
                 message: err.to_string(),
             })
         }
     };
 
-    HttpResponse::Ok().json(Response {
+    HttpResponse::Ok().json(StdRes {
         message: "ok".to_string(),
     })
 }

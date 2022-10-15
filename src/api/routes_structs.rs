@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
-pub struct Response {
+pub struct StdRes {
     pub message: String,
 }
 
