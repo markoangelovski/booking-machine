@@ -13,7 +13,7 @@ use jsonwebtoken::{decode, errors::ErrorKind, Algorithm, DecodingKey, Validation
 use serde::{Deserialize, Serialize};
 use urlencoding::decode as url_decode;
 
-use crate::api::routes_structs::StdRes;
+use crate::api::routes_structs::ErrorResPayload;
 
 pub struct CheckLoginFactory;
 
@@ -103,10 +103,10 @@ where
             let (request, _pl) = request.into_parts();
 
             let response = HttpResponse::Unauthorized()
-                .json(StdRes {
-                    // message: "Unauthorized".to_string(),
-                    message: format!("Unauthorized {}", token_data),
-                })
+                .json(ErrorResPayload::new(
+                    "An error occurred!".to_string(),
+                    format!("Unauthorized {}", token_data),
+                ))
                 // constructed responses map to "right" body, early return res to client
                 .map_into_right_body();
 
