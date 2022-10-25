@@ -35,16 +35,6 @@ impl MongoDB {
         MongoDB { days, events }
     }
 
-    pub async fn find_day_by_datestring(
-        &self,
-        owner_str: &str,
-        day: &str,
-    ) -> Result<Option<Day>, mongodb::error::Error> {
-        let owner_id = ObjectId::parse_str(owner_str).unwrap();
-        let filter = doc! {"owner": owner_id, "day": day};
-        self.days.find_one(filter, None).await
-    }
-
     pub async fn find_event_by_id(
         &self,
         event_id_str: &str,
@@ -56,10 +46,12 @@ impl MongoDB {
 
     pub async fn add_event_to_day(
         &self,
-        day_id: ObjectId,
+        owner_str: &str,
+        day: &str,
         event_id: ObjectId,
     ) -> Result<UpdateResult, mongodb::error::Error> {
-        let filter = doc! {"_id": day_id};
+        let owner_id = ObjectId::parse_str(owner_str).unwrap();
+        let filter = doc! {"owner": owner_id, "day": day};
         let update_opts = doc! {
             "$addToSet" :{
                 "events": event_id
