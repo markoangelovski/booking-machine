@@ -1,0 +1,55 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- master
+
+resources:
+- repo: self
+
+variables:
+  # Image tag
+  tag: '$(Build.BuildId)'
+
+  # Docker repository
+  repository: markoangelovski/booking-machine
+
+  # Build agent
+  agent: 'Local builder'
+
+stages:
+- stage: BuildPush
+  displayName: Build and push the image
+  jobs:
+  - job: Build
+    displayName: Build the image job
+    pool:
+      name: $(agent)
+
+    steps:
+    - task: Docker@2
+      #displayName: Build an image
+      inputs:
+        containerRegistry: 'DockerHub Connection'
+        repository: $(repository)
+        command: buildAndPush
+        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        tags: |
+          $(tag)
+
+- stage: Prod
+  displayName: Release the image
+  jobs:
+    - job: Release
+      displayName: Release the image job
+      pool:
+        name: $(agent)
+      steps:
+        - checkout: none
+        - task: AzureWebAppContainer@1
+          inputs:
+            azureSubscription: 'Azure Connection'
+            appName: 'booking-machine'
+            containers: '$(repository):$(tag)'
+            containerCommand: './booking-machine'
