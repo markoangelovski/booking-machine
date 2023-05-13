@@ -1,19 +1,24 @@
 use actix_web::{
-    delete, post,
+    delete, get, post,
     web::{Data, Query, ReqData},
     HttpResponse,
 };
 // use futures::join;
 use mongodb::bson::oid::ObjectId;
 
-use super::routes_helpers::compare;
 use super::routes_structs::{
     BookingPayload, DeleteBookingPayload, ErrorResPayload, EventResPayload,
 };
+use super::{routes_helpers::compare, routes_structs::Health};
 
 use crate::handlers::mongo::MongoDB;
 use crate::middlewares::auth::UserId;
 use crate::models::mongo::BookingDetail;
+
+#[get("/health")]
+pub async fn health() -> HttpResponse {
+    HttpResponse::Ok().json(Health { status: "ok" })
+}
 
 #[post("/book")]
 pub async fn book_event(

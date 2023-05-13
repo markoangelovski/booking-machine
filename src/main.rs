@@ -7,7 +7,7 @@ mod handlers;
 mod middlewares;
 mod models;
 
-use api::routes::{book_event, delete_event};
+use api::routes::{book_event, delete_event, health};
 use handlers::mongo::MongoDB;
 use middlewares::auth::CheckLoginFactory;
 
@@ -41,6 +41,7 @@ async fn main() -> std::io::Result<()> {
             )
             .wrap(Logger::default())
             .app_data(mongo_data.clone())
+            .service(health)
             .service(book_event)
             .service(delete_event)
     })

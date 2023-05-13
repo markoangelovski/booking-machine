@@ -2,6 +2,11 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
+pub struct Health<'a> {
+    pub status: &'a str,
+}
+
+#[derive(Serialize)]
 pub struct EventResPayload<T> {
     pub message: String,
     pub event: Option<T>,
